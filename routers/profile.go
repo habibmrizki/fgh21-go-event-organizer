@@ -8,6 +8,7 @@ import (
 )
 
 func ProfileRouter(routerGroup *gin.RouterGroup) {
-	routerGroup.POST("/", controllers.CreateProfile)
 	routerGroup.Use(middlewares.AuthMiddleware())
+	routerGroup.POST("/", controllers.CreateProfile)
+	routerGroup.GET("/", controllers.DetailUserProfile)
 }

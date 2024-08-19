@@ -40,14 +40,23 @@ func DetailEvent(ctx *gin.Context) {
 
 func CreateEvent(ctx *gin.Context) {
 	newEvent := models.Event{}
-	 if err := ctx.ShouldBind(&newEvent); 
-		 err != nil {
-		 ctx.JSON(http.StatusBadRequest, lib.Response{
-			 Success: false,
-			 Message: "Invalid input data",
-		 })
-		 return
-	 }
+
+    // tes, _ := ctx.Get("UserId")
+	// createby, _ := tes.(int)
+	// newEvent.CreatedBy = &createby
+
+	createdBy, _ := ctx.Keys["userId"].(int)
+	newEvent.CreatedBy = &createdBy
+    ctx.Bind(&newEvent)
+
+	//  if err := ctx.ShouldBind(&newEvent); 
+	// 	 err != nil {
+	// 	 ctx.JSON(http.StatusBadRequest, lib.Response{
+	// 		 Success: false,
+	// 		 Message: "Invalid input data",
+	// 	 })
+	// 	 return
+	//  }
  
 	 data := models.CreateEvent(newEvent)
 	 ctx.JSON(http.StatusOK, lib.Response{
@@ -114,7 +123,7 @@ func UpdateEvent(c *gin.Context) {
         return
     }
 	
-    models.EditUser(event.Image, event.Image, event.Title, param)
+    models.EditEvent(event.Image, event.Date, event.Title, event.Description, id)
 
     c.JSON(http.StatusOK, lib.Response{
         Success: true,

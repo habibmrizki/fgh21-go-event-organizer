@@ -9,15 +9,14 @@ import (
 )
 
 type Event struct {
-	Id          int    `jsob:"id" form:"id" db:"id"`
+	Id          int    `json:"id" form:"id" db:"id"`
 	Image       string `json:"image" form:"image" db:"image"`
 	Title       string `json:"title" form:"title" db:"title"`
 	Date        string `json:"date" form:"date" db:"date"`
 	Description string `json:"description" form:"description" db:"description"`
-	LocationId  *int    `json:"locationd_id" form:"location_id" db:"location_id"`
-	CreatedBy   *int    `json:"created_by" form:"created_by" db:"created_by"`
+	LocationId  *int    `json:"locationd_id"  db:"location_id"`
+	CreatedBy   *int    `json:"created_by"  db:"created_by"`
 }
-
 
 func FindAllEvent() []Event {
 	db := lib.DB()
@@ -36,6 +35,7 @@ func FindAllEvent() []Event {
 	
 	return events
 }
+
 
 func FindEventById(id int) Event {
 	db := lib.DB() //melakukan koneksi ke database
@@ -67,30 +67,26 @@ func FindEventById(id int) Event {
 func CreateEvent(data Event) Event{
 	db := lib.DB()
 	defer db.Close(context.Background())
-	fmt.Println(data)
-	
-	sql := `insert into "events" (image, title, date, description) values ($1, $2, $3, $4) returning "id", "image", "title", "date", "description"`
-	row := db.QueryRow(context.Background(), sql, data.Image, data.Title, data.Date, data.Description,)
-	
-	var results Event
-	fmt.Println(data.Description)
-	row.Scan(
-		&results.Id,
-		&results.Image,
-		&results.Title,
-		&results.Date,
-		&results.Description,
-	)
-	return results
+
+	sql := `INSERT INTO "events" ("image", "title", "date", "description")
+	VALUES ($1, $2, $3, $4)`
+	db.Exec(context.Background(), sql, data.Image, data.Title, data.Date, data.Description)
+	id := 0
+	for _, v := range FindAllEvent() {
+		id = v.Id
+	}
+	data.Id = id
+
+	return data
 	}
 
 
-func EditEvent(Image string, Title string, Date string, Description string) {
+func EditEvent(Image string, Title string, Date string, Description string, id int) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
-	sql := `UPDATE events SET image = $1, title = $2, date = $3, description = $4 WHERE id = $5`
-	db.Exec(context.Background(), sql, Image, Title, Date, Description, )
+	sql := `UPDATE "events" SET ("image", "title", "date", "description") = ($1, $2, $3, $4) where id = $5`
+	db.Exec(context.Background(), sql, Image, Title, Date, Description, id )
 }
 
 // func Updateevents(image string, tittle string, date int, description string, location int, created_by int, id string) {

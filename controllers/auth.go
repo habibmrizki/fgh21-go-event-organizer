@@ -41,7 +41,6 @@ func AuthLogin(ctx *gin.Context) {
 	}
 
 	isVerified := lib.Verify(user.Password, found.Password)
-
 	if isVerified {
 		JWToken := lib.GenerateUserIdToken(found.Id)
 		ctx.JSON(http.StatusOK, lib.Response{
@@ -57,7 +56,6 @@ func AuthLogin(ctx *gin.Context) {
 			Message: "Wrong Email or Password",
 		})
 	}
-
 }
 
 func AuthRegister(ctx *gin.Context) {
@@ -78,7 +76,7 @@ func AuthRegister(ctx *gin.Context) {
 	userId := createUser.Id
 	profile.UserId = userId
 	
-	createProfile:= models.CreateProfile(profile)
+	createProfile:= models.Createprofile(profile)
 	createProfile.Email = form.Email
 	createProfile.FullName = form.FullName
 

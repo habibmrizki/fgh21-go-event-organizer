@@ -101,22 +101,47 @@ func (u User) Error() string {
 	panic("unimplemented")
 }
 
-func FindAllUsers() []User {
+func CountFindUser(search string) (int) {
 	db := lib.DB()
+	
 	defer db.Close(context.Background())
+
+	sql := `select count(id) as "Total" from "users" where "email"=$1`
+
+	row := db.QueryRow(context.Background(),sql, search)
+
+	var total int
+
+	row.Scan(
+		&total,
+	)		
+	
+	return total
+}
+
+func FindAllUsers(search string, limit int, page int) ([]User, int) {
+	db := lib.DB()
+	offset := (page - 1) * limit
+
+	defer db.Close(context.Background())
+	sql := 	`
+		select * from "users" 
+		where "email" ilike '%' || $1 || '%'
+		limit $2 offset $3
+	`
 
 	rows, _ := db.Query(
 		context.Background(),
-		`select * from "users" order by "id" asc`,
+		sql, search, limit, offset,
 	)
-
 	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
-
 	if err != nil {
 		fmt.Println(err)
 	}
+	
+	result := CountFindUser(search)
 
-	return users
+	return users, result
 }
 
 func FindOneUserById(id int) User {
@@ -221,3 +246,17 @@ func EditUser(email string, username string, password string, id string)  {
 
 	db.Exec(context.Background(), dataSql, email, username, password, id)
 }
+
+// func Updatepassword(password string, id int) error {
+//     db := lib.DB()
+//     defer db.Close(context.Background())
+//     epassword := lib.Encrypt(password)
+
+//     dataSql := `UPDATE "users" SET password = $1 WHERE id = $2`
+//     _, err := db.Exec(context.Background(), dataSql, epassword, id)
+//     if err != nil {
+//         return fmt.Errorf("failed to update password: %v", err)
+//     }
+
+//     return nil
+// } 

@@ -5,6 +5,7 @@ import (
 	"fazztrack/demo/models"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,7 @@ func CreateProfile(ctx *gin.Context) {
 		 return
 	 }
  
-	 dataProfile := models.CreateProfile(newProfile)
+	 dataProfile := models.Createprofile(newProfile)
  
 	 ctx.JSON(http.StatusOK, lib.Response{
 		 Success: true,
@@ -29,3 +30,32 @@ func CreateProfile(ctx *gin.Context) {
 		 Results: dataProfile,
 	 })
  }
+ 
+ func DetailUserProfile(ctx *gin.Context) {
+	userId := ctx.GetInt("userId")
+	detailProfile := models.FindProfileByUserId(userId)
+	fmt.Println(detailProfile)
+	ctx.JSON(http.StatusOK, lib.Response{
+		Success: true,
+		Message: "Found",
+		Results: detailProfile,
+	})
+ }
+
+ func ListOneNational(ctx *gin.Context) {
+    id,_ := strconv.Atoi(ctx.Param("id"))
+    results := models.FindOneNational(id)
+    ctx.JSON(http.StatusOK, lib.Response{
+        Success: true,
+        Message: "Id National",
+        Results: results,
+    })
+}
+func ListAllNational(ctx *gin.Context) {
+    results := models.FindAllNationality()
+    ctx.JSON(http.StatusOK, lib.Response{
+        Success: true,
+        Message: "List All National",
+        Results: results,
+    })
+}

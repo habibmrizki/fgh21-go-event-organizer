@@ -10,7 +10,7 @@ import (
 
 type Profile struct {
 	Id       	  int    `json:"id" db:"id"`
-	Picture       *string `json:"picture" db:"picture"`
+	Picture       string `json:"picture" db:"picture"`
 	FullName      string `json:"full_name" form:"fullname" db:"full_name"`
 	BirthDate     *string `json:"birth_date" form:"birth_date" db:"birth_date"`
 	Gender        int    `json:"gender" form:"gender"`
@@ -20,16 +20,22 @@ type Profile struct {
 	UserId        int    `json:"user_id" form:"user_id" db:"user_id"`
 }
 
+
 type JoinUserProfile struct {
 	Id          int    `json:"id"`
-	FullName    string `json:"fullName"`
-	Username    string `json:"username,omitempty"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phone-number,omitempty"`
-	Gender      string `json:"gender,omitempty"`
-	Profession  string `json:"profession,omitempty"`
-	Nationality int    `json:"nationality,omitempty"`
-	BirthDate   string `json:"birth-date,omitempty"`
+	FullName    string `json:"fullName" db:"full_name"`
+	Username    *string `json:"username,omitempty" db:"username"`
+	Email       string `json:"email" db:"email"`
+	PhoneNumber *string `json:"phoneNumber,omitempty" db:"phone_number"`
+	Gender      string `json:"gender,omitempty" db:"gender"`
+	Profession  *string `json:"profession,omitempty" db:"profession"`
+	Nationality *int    `json:"nationality,omitempty" db:"nationality_id"`
+	BirthDate   *string `json:"birthDate,omitempty" db:"birth_date"`
+}
+
+type Nationalities struct {
+	Id int `json:"id"`
+	Name string `json:"nationality"`
 }
 
 // Error implements error.
@@ -37,7 +43,7 @@ func (p Profile) Error() string {
 	panic("unimplemented")
 }
 
-func CreateProfile(data Profile) JoinUserProfile {
+func Createprofile(data Profile) JoinUserProfile {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
@@ -56,11 +62,11 @@ func CreateProfile(data Profile) JoinUserProfile {
 	return result
 }
 
-func ListAllProfile ()[]JoinUserProfile {
+func ListAllProfile(id int)[]JoinUserProfile {
 	db := lib.DB()
-	defer db.Close(context.Background())
+	defer db.Close(context.Background()) 
 
-	joinSql := `select "u"."id", "u"."email", "p"."full_name", "u"."username", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
+	joinSql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
 	from "users" "u" 
 	join "profile" "p"
 	on "u"."id" = "p"."user_id"`
@@ -69,38 +75,96 @@ func ListAllProfile ()[]JoinUserProfile {
 		context.Background(),
 		joinSql,
 		)
+		
 	
 	events, _ := pgx.CollectRows(rows, pgx.RowToStructByPos[JoinUserProfile])
 	return events
 }
 
 
+
 func FindProfileByUserId(id int) JoinUserProfile {
 	db := lib.DB()
 	defer db.Close(context.Background())
+	// fmt.Println(id)
+	// var result JoinUserProfile
+	// for _, v := range ListAllProfile() {
+		// 	if v.Id == id {
+			// 		result = v
+			// 	}
+			// }
+			
+			sql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
+			from "users" "u" 
+			join "profile" "p"
+			on "u"."id" = "p"."user_id" where "u"."id" = $1`
+			
+			row := db.QueryRow(
+				context.Background(),
+		sql, id,
+	)
+	fmt.Println(row)
 	
 	var result JoinUserProfile
-	for _, v := range ListAllProfile() {
-		if v.Id == id {
-			result = v
-		}
+	row.Scan(
+		&result.Id,
+			&result.FullName,
+			&result.Username,
+			&result.Email,
+			&result.Gender,
+			&result.PhoneNumber,
+			&result.Profession,
+			&result.BirthDate,
+			&result.Nationality,
+		)
+		
+		return result
 	}
+
+	func FindAllNationality() []*Nationalities {
+		db := lib.DB()
+		defer db.Close(context.Background())
 	
-	return result
-}
-
-// func FindprofileById(id int) Profile {
-// 	db := lib.DB() //melakukan koneksi ke database
-// 	defer db.Close(context.Background())
-// 	rows, _ := db.Query(
-// 		context.Background(),
-// 		`select "id", "picture", "full_name", "birth_date", "gender", "phone_number", "profession", "nationality_id", "user_id" from "profile" where "id"=$1`,
-// 		id,
-// 	)
+		rows, _ := db.Query(
+			context.Background(),
+			`SELECT * FROM "nationalities" order by "id" asc`,
+		)
 	
+		national, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[Nationalities])
+	
+		if err != nil {
+			fmt.Println(err)
+		}
+	
+		return national
+	}
 
-// 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Profile])
-
+	func FindOneNational(id int) []Nationalities{
+		db := lib.DB()
+		defer db.Close(context.Background())
+	
+		rows, _ := db.Query(context.Background(),
+			`select * from "nationalities" where "id" = $1`,id,
+		)
+		national, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Nationalities])
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(national)
+		return national
+	}
+	// func FindprofileById(id int) Profile {
+		// 	db := lib.DB() //melakukan koneksi ke database
+		// 	defer db.Close(context.Background())
+		// 	rows, _ := db.Query(
+			// 		context.Background(),
+			// 		`select "id", "picture", "full_name", "birth_date", "gender", "phone_number", "profession", "nationality_id", "user_id" from "profile" where "id"=$1`,
+			// 		id,
+			// 	)
+			
+			
+			// 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Profile])
+			
 // 	if err != nil {
 // 		fmt.Println(err)
 // 	}	

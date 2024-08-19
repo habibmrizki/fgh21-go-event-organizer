@@ -16,7 +16,7 @@ func GenerateUserIdToken(id int) string {
 		},
 	})
 
-	tokenSignedString, _ := token.SignedString([]byte("Secret"))
+	tokenSignedString, _ := token.SignedString([]byte("secret"))
 	return tokenSignedString
 }
 
@@ -29,6 +29,7 @@ func ValidateToken(token string) (bool, int) {
 	})
 
 	if err != nil {
+		fmt.Println(err)
 		panic("Error: token invalid")
 	}
 

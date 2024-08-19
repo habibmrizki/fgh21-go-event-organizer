@@ -93,6 +93,7 @@ import (
 	"fazztrack/demo/lib"
 	"fazztrack/demo/models"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -100,10 +101,38 @@ import (
 )
 
 func ListAllUsers(ctx *gin.Context) {
-	results := models.FindAllUsers()
+
+    q := ctx.Query("search")
+    limit, _ := strconv.Atoi(ctx.Query("limit"))
+    page, _ := strconv.Atoi(ctx.Query("page"))
+
+    if limit == 0 {
+        limit = 10
+    }
+
+    if page < 1 {
+        page = 1
+    }
+  
+	results, count := models.FindAllUsers(q, limit, page)
+    totalPage := math.Ceil(float64(count) / float64(limit))
+    
+
+    prev := int(totalPage) - 1
+    next := int(totalPage) - page
+	
+	pageInfo := lib.PageInfo{
+		TotalData: count,
+		TotalPage: int(totalPage),
+		Page: page,
+		Limit: limit,
+		Next: next,
+		Prev: prev,
+	}
 	ctx.JSON(http.StatusOK, lib.Response{
 		Success: true,
-		Message: "List all users",
+		Message: "Show All Categories",
+		PageInfo: pageInfo,
 		Results: results,
 	})
 }
@@ -129,7 +158,6 @@ func DetailUser(ctx *gin.Context) {
 
 func CreateUser(ctx *gin.Context) {
    newUser := models.User{}
-   
     if err := ctx.ShouldBind(&newUser); 
 		err != nil {
         ctx.JSON(http.StatusBadRequest, lib.Response{
@@ -148,13 +176,17 @@ func CreateUser(ctx *gin.Context) {
     })
 }
 
-func UpdateUser(c *gin.Context) {
-    param := c.Param("id")
+func UpdateUser(ctx *gin.Context) {
+    param := ctx.Param("id")
     id, _  := strconv.Atoi(param)
-    dataUser := models.FindAllUsers()
+
+    q := ctx.Query("search")
+    limit, _ := strconv.Atoi(ctx.Query("limit"))
+    page, _ := strconv.Atoi(ctx.Query("page"))
+    dataUser, _ := models.FindAllUsers(q, limit, page)
 
     user := models.User{}
-    err := c.Bind(&user)
+    err := ctx.Bind(&user)
     if err != nil {
         fmt.Println(err)
         return
@@ -168,7 +200,7 @@ func UpdateUser(c *gin.Context) {
     }
 	
     if result.Id == 0 {
-        c.JSON(http.StatusNotFound, lib.Response{
+        ctx.JSON(http.StatusNotFound, lib.Response{
             Success: false,
             Message: "user whit id " + param + " not found",
         })
@@ -177,7 +209,7 @@ func UpdateUser(c *gin.Context) {
 	
     models.EditUser(user.Email, user.Username, user.Password, param)
 
-    c.JSON(http.StatusOK, lib.Response{
+    ctx.JSON(http.StatusOK, lib.Response{
         Success: true,
         Message: "user whit id " + param + " Edit Success",
         Results: user,
@@ -212,3 +244,41 @@ func DeleteUser(ctx *gin.Context) {
         Results: dataUser,
     })
 }
+
+// func UpdatePassword(ctx *gin.Context) {
+//     id := ctx.GetInt("userId")
+//     user := models.FindOneusers(id)
+
+//     if user.Id == 0 {
+//         ctx.JSON(http.StatusNotFound, lib.Response{
+//             Success: false,
+//             Message: "User not found",
+//         })
+//         return
+//     }
+
+//     Password := 
+//     var req struct {
+//         Password `string form:"password" binding:"required,min=8"`
+//     }
+//     if err := ctx.ShouldBind(&req); err != nil {
+//         ctx.JSON(http.StatusBadRequest, lib.Response{
+//             Success: false,
+//             Message: "Invalid input data",
+//         })
+//         return
+//     }
+
+//     if err := models.Updatepassword(req.Password, id); err != nil {
+//         ctx.JSON(http.StatusInternalServerError, lib.Response{
+//             Success: false,
+//             Message: "Failed to update password",
+//         })
+//         return
+//     }
+
+//     ctx.JSON(http.StatusOK, lib.Response{
+//         Success: true,
+//         Message: "Password successfully updated",
+//     })
+// } 

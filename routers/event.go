@@ -2,7 +2,7 @@ package routers
 
 import (
 	"fazztrack/demo/controllers"
-	// "fazztrack/demo/middlewares"
+	"fazztrack/demo/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,8 +10,10 @@ import (
 func EventRouter(routerGroup *gin.RouterGroup) {
 	// routerGroup.Use(middlewares.AuthMiddleware())
 	routerGroup.GET("", controllers.ListAllEvent)
+	routerGroup.GET("/section/:id", controllers.ShowSectionsByEventId)
+	routerGroup.GET("/payment_method", middlewares.AuthMiddleware(), controllers.ListAllPaymentMethod)
 	routerGroup.GET("/:id", controllers.DetailEvent)
-	routerGroup.POST("", controllers.CreateEvent)
-	routerGroup.PATCH("/:id", controllers.UpdateEvent)
-	routerGroup.DELETE("/:id", controllers.DeleteEvent)
+	routerGroup.POST("", middlewares.AuthMiddleware(), controllers.CreateEvent)
+	routerGroup.PATCH("/:id", middlewares.AuthMiddleware(), controllers.UpdateEvent)
+	routerGroup.DELETE("/:id", middlewares.AuthMiddleware(), controllers.DeleteEvent)
 }
