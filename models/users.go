@@ -93,7 +93,7 @@ type User struct {
 	Id       int    `json:"id" db:"id"`
 	Email    string `json:"email" form:"email" db:"email"`
 	Password string `json:"-" form:"password" db:"password"`
-	Username string `json:"username" form:"username" db:"username"`
+	Username *string `json:"username" form:"username" db:"username"`
 }
 
 // Error implements error.
@@ -238,13 +238,22 @@ func DeleteUser(id int) error {
 	return nil
 }
 
-func EditUser(email string, username string, password string, id string)  {
+func EditUser(data User, id int)  User {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
 	dataSql := `update "users" set ("email", "username", "password") = ($1, $2, $3) where id=$4`
 
-	db.Exec(context.Background(), dataSql, email, username, password, id)
+	row := db.QueryRow(context.Background(), dataSql, data.Email, data.Username, id)
+
+	var result User
+	row.Scan(
+		&result.Id,
+		&result.Email,
+		&result.Username,
+	)
+
+	return result
 }
 
 // func Updatepassword(password string, id int) error {

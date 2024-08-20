@@ -11,4 +11,5 @@ func ProfileRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.Use(middlewares.AuthMiddleware())
 	routerGroup.POST("/", controllers.CreateProfile)
 	routerGroup.GET("/", controllers.DetailUserProfile)
+	routerGroup.PATCH("/:id", controllers.UpdateProfile)
 }

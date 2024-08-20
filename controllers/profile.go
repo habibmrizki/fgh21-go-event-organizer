@@ -34,11 +34,37 @@ func CreateProfile(ctx *gin.Context) {
  func DetailUserProfile(ctx *gin.Context) {
 	userId := ctx.GetInt("userId")
 	detailProfile := models.FindProfileByUserId(userId)
-	fmt.Println(detailProfile)
+	// fmt.Println(detailProfile)
 	ctx.JSON(http.StatusOK, lib.Response{
 		Success: true,
-		Message: "Found",
+		Message: "User Profile",
 		Results: detailProfile,
+	})
+ }
+
+ func UpdateProfile(ctx *gin.Context) {
+	profile := models.JoinUserProfile{}
+	ctx.Bind(&profile)
+	id := ctx.GetInt("userId")
+	
+	models.EditUser(models.User{
+		Username: &profile.Username,
+		Email: profile.Email,
+	}, id)
+
+	edit := models.UpdateProfile(models.Profile{
+		FullName: profile.FullName,
+		BirthDate: profile.BirthDate,
+		Gender: *profile.Gender,
+		PhoneNumber: profile.PhoneNumber,
+		Profession: profile.Profession,
+		NationalityId: profile.Nationality,
+	}, id)
+
+	ctx.JSON(http.StatusOK, lib.Response{
+		Success: true,
+		Message: "Success to edit profile",
+		Results: edit,
 	})
  }
 

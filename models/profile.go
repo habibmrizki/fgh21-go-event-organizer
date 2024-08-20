@@ -24,10 +24,10 @@ type Profile struct {
 type JoinUserProfile struct {
 	Id          int    `json:"id"`
 	FullName    string `json:"fullName" db:"full_name"`
-	Username    *string `json:"username,omitempty" db:"username"`
+	Username    string `json:"username,omitempty" db:"username"`
 	Email       string `json:"email" db:"email"`
 	PhoneNumber *string `json:"phoneNumber,omitempty" db:"phone_number"`
-	Gender      string `json:"gender,omitempty" db:"gender"`
+	Gender      *int `json:"gender,omitempty" db:"gender"`
 	Profession  *string `json:"profession,omitempty" db:"profession"`
 	Nationality *int    `json:"nationality,omitempty" db:"nationality_id"`
 	BirthDate   *string `json:"birthDate,omitempty" db:"birth_date"`
@@ -66,10 +66,11 @@ func ListAllProfile(id int)[]JoinUserProfile {
 	db := lib.DB()
 	defer db.Close(context.Background()) 
 
-	joinSql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
+	joinSql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."phone_number", "p"."gender","p"."profession", "p"."nationality_id", "p"."birth_date"  
 	from "users" "u" 
 	join "profile" "p"
-	on "u"."id" = "p"."user_id"`
+	on "u"."id" = "p"."user_id"
+	`
 		
 	rows, _:= db.Query(
 		context.Background(),
@@ -93,17 +94,18 @@ func FindProfileByUserId(id int) JoinUserProfile {
 			// 		result = v
 			// 	}
 			// }
+	
+	sql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."phone_number", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
+	from "users" "u" 
+	join "profile" "p"
+	on "u"."id" = "p"."user_id" where "u"."id" = $1`
 			
-			sql := `select "u"."id", "p"."full_name", "u"."username", "u"."email", "p"."gender", "p"."phone_number","p"."profession", "p"."nationality_id", "p"."birth_date"  
-			from "users" "u" 
-			join "profile" "p"
-			on "u"."id" = "p"."user_id" where "u"."id" = $1`
-			
-			row := db.QueryRow(
-				context.Background(),
+
+	row := db.QueryRow(
+		context.Background(),
 		sql, id,
 	)
-	fmt.Println(row)
+	// fmt.Println(row)
 	
 	var result JoinUserProfile
 	row.Scan(
@@ -111,8 +113,8 @@ func FindProfileByUserId(id int) JoinUserProfile {
 			&result.FullName,
 			&result.Username,
 			&result.Email,
-			&result.Gender,
 			&result.PhoneNumber,
+			&result.Gender,
 			&result.Profession,
 			&result.BirthDate,
 			&result.Nationality,
@@ -121,7 +123,19 @@ func FindProfileByUserId(id int) JoinUserProfile {
 		return result
 	}
 
-	func FindAllNationality() []*Nationalities {
+func UpdateProfile(data Profile, id int) JoinUserProfile{
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `update "profile" "set" (full_name, birth_date, gender, phone_number, profession, nationality_id) =
+			($1, $2,$3,$4,$5,$6) WHERE users_id = $7 `
+	db.Exec(context.Background(), sql, data.FullName, data.BirthDate, data.Gender, data.PhoneNumber, data.Profession, data.NationalityId, id)
+
+	result := FindProfileByUserId(id)
+	return result
+	}
+
+func FindAllNationality() []*Nationalities {
 		db := lib.DB()
 		defer db.Close(context.Background())
 	
@@ -150,30 +164,6 @@ func FindProfileByUserId(id int) JoinUserProfile {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(national)
+		// fmt.Println(national)
 		return national
 	}
-	// func FindprofileById(id int) Profile {
-		// 	db := lib.DB() //melakukan koneksi ke database
-		// 	defer db.Close(context.Background())
-		// 	rows, _ := db.Query(
-			// 		context.Background(),
-			// 		`select "id", "picture", "full_name", "birth_date", "gender", "phone_number", "profession", "nationality_id", "user_id" from "profile" where "id"=$1`,
-			// 		id,
-			// 	)
-			
-			
-			// 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Profile])
-			
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}	
-
-// 	profile := Profile{}
-// 	for _, v := range profiles {
-// 		if v.Id == id {
-// 			profile = v
-// 		}
-// 	}
-// 	return profile
-// }

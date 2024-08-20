@@ -177,20 +177,19 @@ func CreateUser(ctx *gin.Context) {
 }
 
 func UpdateUser(ctx *gin.Context) {
-    param := ctx.Param("id")
-    id, _  := strconv.Atoi(param)
-
-    q := ctx.Query("search")
-    limit, _ := strconv.Atoi(ctx.Query("limit"))
-    page, _ := strconv.Atoi(ctx.Query("page"))
-    dataUser, _ := models.FindAllUsers(q, limit, page)
-
+    id, _  := strconv.Atoi(ctx.Param("id"))
     user := models.User{}
     err := ctx.Bind(&user)
     if err != nil {
         fmt.Println(err)
         return
     }
+
+    q := ctx.Query("search")
+    limit, _ := strconv.Atoi(ctx.Query("limit"))
+    page, _ := strconv.Atoi(ctx.Query("page"))
+    dataUser, _ := models.FindAllUsers(q, limit, page)
+
 
     result := models.User{}
     for _, v := range dataUser {
@@ -202,17 +201,17 @@ func UpdateUser(ctx *gin.Context) {
     if result.Id == 0 {
         ctx.JSON(http.StatusNotFound, lib.Response{
             Success: false,
-            Message: "user whit id " + param + " not found",
+            Message: "user whit id  not found",
         })
         return
     }
 	
-    models.EditUser(user.Email, user.Username, user.Password, param)
+    data := models.EditUser(user, id)
 
     ctx.JSON(http.StatusOK, lib.Response{
         Success: true,
-        Message: "user whit id " + param + " Edit Success",
-        Results: user,
+        Message: "user whit id  Edit Success",
+        Results: data,
     })
 }
 
